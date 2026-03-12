@@ -619,8 +619,10 @@ locIn.addEventListener('input',()=>{
   if(local.length>0){
     showSuggestions(local.map(c=>({name:c.name,lat:c.lat,lon:c.lon})));
   }
-  // APIでも並行して検索（結果が来たらマージ）
-  sto=setTimeout(()=>findCity(q,local),400);
+  // プリセットにない場合だけAPIを検索（長野の小村など誤爆を防ぐ）
+  if(local.length===0){
+    sto=setTimeout(()=>findCity(q,local),400);
+  }
 });
 locIn.addEventListener('blur',()=>setTimeout(()=>sugEl.classList.remove('on'),200));
 
