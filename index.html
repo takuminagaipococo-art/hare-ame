@@ -505,6 +505,32 @@ const CITIES=[
   {name:'那覇',lat:26.21,lon:127.68},{name:'北九州',lat:33.88,lon:130.88},
   {name:'川崎',lat:35.53,lon:139.70},{name:'相模原',lat:35.57,lon:139.37},
   {name:'浜松',lat:34.71,lon:137.73},{name:'堺',lat:34.57,lon:135.48},
+  // 都道府県名でも検索できるように（県庁所在地の座標）
+  {name:'北海道',lat:43.06,lon:141.35},{name:'青森県',lat:40.82,lon:140.74},
+  {name:'岩手県',lat:39.70,lon:141.15},{name:'宮城県',lat:38.27,lon:140.87},
+  {name:'秋田県',lat:39.72,lon:140.10},{name:'山形県',lat:38.25,lon:140.34},
+  {name:'福島県',lat:37.75,lon:140.47},{name:'茨城県',lat:36.34,lon:140.45},
+  {name:'栃木県',lat:36.57,lon:139.88},{name:'群馬県',lat:36.39,lon:139.06},
+  {name:'埼玉県',lat:35.86,lon:139.65},{name:'千葉県',lat:35.61,lon:140.12},
+  {name:'東京都',lat:35.68,lon:139.69},{name:'神奈川県',lat:35.44,lon:139.64},
+  {name:'新潟県',lat:37.90,lon:139.02},{name:'富山県',lat:36.70,lon:137.21},
+  {name:'石川県',lat:36.59,lon:136.63},{name:'福井県',lat:36.07,lon:136.22},
+  {name:'山梨県',lat:35.66,lon:138.57},{name:'長野県',lat:36.65,lon:138.18},
+  {name:'岐阜県',lat:35.39,lon:136.72},{name:'静岡県',lat:34.98,lon:138.38},
+  {name:'愛知県',lat:35.18,lon:136.91},{name:'三重県',lat:34.73,lon:136.51},
+  {name:'滋賀県',lat:35.00,lon:135.87},{name:'京都府',lat:35.01,lon:135.77},
+  {name:'大阪府',lat:34.69,lon:135.50},{name:'兵庫県',lat:34.69,lon:135.20},
+  {name:'兵庫',lat:34.69,lon:135.20},  // 兵庫と入力しても神戸の座標を返す
+  {name:'奈良県',lat:34.69,lon:135.80},{name:'和歌山県',lat:34.23,lon:135.17},
+  {name:'鳥取県',lat:35.50,lon:134.24},{name:'島根県',lat:35.47,lon:133.05},
+  {name:'岡山県',lat:34.66,lon:133.93},{name:'広島県',lat:34.40,lon:132.46},
+  {name:'山口県',lat:34.19,lon:131.47},{name:'徳島県',lat:34.07,lon:134.56},
+  {name:'香川県',lat:34.34,lon:134.04},{name:'愛媛県',lat:33.84,lon:132.77},
+  {name:'高知県',lat:33.56,lon:133.53},{name:'福岡県',lat:33.59,lon:130.40},
+  {name:'佐賀県',lat:33.25,lon:130.30},{name:'長崎県',lat:32.75,lon:129.87},
+  {name:'熊本県',lat:32.79,lon:130.74},{name:'大分県',lat:33.24,lon:131.61},
+  {name:'宮崎県',lat:31.91,lon:131.42},{name:'鹿児島県',lat:31.56,lon:130.56},
+  {name:'沖縄県',lat:26.21,lon:127.68},
   // 海外主要都市
   {name:'ソウル',lat:37.57,lon:126.98},{name:'釜山',lat:35.18,lon:129.08},
   {name:'台北',lat:25.03,lon:121.57},{name:'香港',lat:22.32,lon:114.17},
@@ -598,13 +624,18 @@ locIn.addEventListener('input',()=>{
 });
 locIn.addEventListener('blur',()=>setTimeout(()=>sugEl.classList.remove('on'),200));
 
+// items: [{name(入力欄にセットする値), label(表示用), lat, lon}]
 function showSuggestions(items){
   sugEl.innerHTML='';
   items.forEach(c=>{
     const div=document.createElement('div');
     div.className='sug-item';
-    div.textContent=c.name;
-    div.onclick=()=>{locIn.value=c.name;sLat=c.lat;sLon=c.lon;sugEl.classList.remove('on')};
+    div.textContent=c.label||c.name;  // 表示は詳細名
+    div.onclick=()=>{
+      locIn.value=c.name;             // 入力欄には都市名だけ
+      sLat=c.lat; sLon=c.lon;
+      sugEl.classList.remove('on');
+    };
     sugEl.appendChild(div);
   });
   if(items.length>0)sugEl.classList.add('on');
@@ -616,16 +647,21 @@ async function findCity(q,localResults){
     const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=ja&format=json`);
     const d=await r.json();
     if(d.results?.length){
-      // プリセットにない都市をAPIから追加
       const localNames=new Set((localResults||[]).map(c=>c.name));
       const apiItems=d.results
         .filter(c=>!localNames.has(c.name))
         .map(c=>{
-          const p=[c.name];if(c.admin1)p.push(c.admin1);if(c.country)p.push(c.country);
-          return{name:p.join('、'),lat:c.latitude,lon:c.longitude};
+          const parts=[c.name];
+          if(c.admin1)parts.push(c.admin1);
+          if(c.country)parts.push(c.country);
+          return{
+            name:c.name,              // 入力欄にセットする値（都市名のみ）
+            label:parts.join('・'),   // 表示用（都市・県・国）
+            lat:c.latitude, lon:c.longitude
+          };
         });
-      const merged=[...(localResults||[]).map(c=>({name:c.name,lat:c.lat,lon:c.lon})),...apiItems].slice(0,6);
-      // 入力値がまだ同じなら表示を更新
+      const presets=(localResults||[]).map(c=>({name:c.name,label:c.name,lat:c.lat,lon:c.lon}));
+      const merged=[...presets,...apiItems].slice(0,6);
       if(locIn.value.trim().includes(q.charAt(0)))showSuggestions(merged);
     }
   }catch(e){
