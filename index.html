@@ -404,7 +404,7 @@ canvas{display:none}
       <div class="form-row">
         <div class="field">
           <label>いつ？</label>
-          <input type="date" id="evDate" max="2026-03-11">
+          <input type="date" id="evDate">
         </div>
         <div class="field loc-wrap">
           <label>どこで？</label>
@@ -459,6 +459,12 @@ canvas{display:none}
 <script>
 // ★ ここにGitHub PagesのURLを入れてね ★
 const SITE_URL = location.href;
+
+// 日付の最大値を「昨日」に動的設定
+(function(){
+  const d = new Date(); d.setDate(d.getDate()-1);
+  document.getElementById('evDate').max = d.toISOString().split('T')[0];
+})();
 
 let evs=[], gender='male', res=null, sLat=null, sLon=null, sto=null;
 
@@ -755,9 +761,11 @@ function postX(){
   const sp=(cnt.sunny/tot*100).toFixed(0),rp=(cnt.rainy/tot*100).toFixed(0);
   const gl=gender==='male'?'男':gender==='female'?'女':'体質';
   const nick=document.getElementById('nickname').value.trim()||'わたし';
+  const np=(cnt.snowy/tot*100).toFixed(0);
   let tp;
   if(sp>=50)tp=`晴れ${gl}☀️`;
   else if(rp>=50)tp=`雨${gl}☔`;
+  else if(np>=30)tp=`雪${gl}❄️`;
   else tp=`くもり${gl}⛅`;
 
   const txt=`${nick}の人生イベント${tot}件を調べたら\n「${tp}」だった！\n\n☀️${sp}% ☁️${(cnt.cloudy/tot*100).toFixed(0)}% 🌧${rp}%\n\nあなたも調べてみて\n#晴れか雨か診断`;
@@ -769,97 +777,98 @@ function makeImg(){
   const c=document.getElementById('cvs'),x=c.getContext('2d');
   const S=1080;
 
-  // BG
-  x.fillStyle='#faf6f0';x.fillRect(0,0,S,S);
-
-  // Top accent bar
   const cnt={sunny:0,cloudy:0,rainy:0,snowy:0};
   res.forEach(r=>cnt[r.w.t]++);
   const tot=res.length;
-  const sp=cnt.sunny/tot*100,rp=cnt.rainy/tot*100,np=cnt.snowy/tot*100;
+  const sp=cnt.sunny/tot*100, cp=cnt.cloudy/tot*100,
+        rp=cnt.rainy/tot*100,  np=cnt.snowy/tot*100;
   const gl=gender==='male'?'男':gender==='female'?'女':'体質';
-
-  let type,emoji,title,col1,col2;
-  if(sp>=50){type='sunny';emoji='☀️';title=`晴れ${gl}`;col1='#e8a84c';col2='#f0c860'}
-  else if(rp>=50){type='rainy';emoji='☔';title=`雨${gl}`;col1='#5a9cc8';col2='#7ab8e0'}
-  else if(np>=30){type='snowy';emoji='❄️';title=`雪${gl}`;col1='#8ab8d8';col2='#a8d0e8'}
-  else{type='cloudy';emoji='⛅';title=`くもり${gl}`;col1='#a09888';col2='#c0b8a8'}
-
-  // Accent bar top
-  const grd=x.createLinearGradient(0,0,S,0);
-  grd.addColorStop(0,col1);grd.addColorStop(1,col2);
-  x.fillStyle=grd;x.fillRect(0,0,S,8);
-
-  // Decorative circles
-  x.globalAlpha=0.06;
-  x.fillStyle=col1;
-  x.beginPath();x.arc(160,200,180,0,Math.PI*2);x.fill();
-  x.fillStyle=col2;
-  x.beginPath();x.arc(S-160,S-200,180,0,Math.PI*2);x.fill();
-  x.globalAlpha=1;
-
-  // Stamp circle
-  x.fillStyle=type==='sunny'?'#fef5e0':type==='rainy'?'#e8f0f8':type==='snowy'?'#eef4fa':'#f0ece8';
-  x.beginPath();x.arc(S/2,260,100,0,Math.PI*2);x.fill();
-
-  // Emoji
-  x.font='80px sans-serif';x.textAlign='center';x.textBaseline='middle';
-  x.fillText(emoji,S/2,260);
-
-  // Nick
   const nick=document.getElementById('nickname').value.trim()||'あなた';
-  x.font='500 24px "Zen Maru Gothic",sans-serif';x.fillStyle='#a09080';
+
+  let type,emoji,title,mainCol,bgCol;
+  if(sp>=50){type='sunny'; emoji='☀️';title=`晴れ${gl}`;mainCol='#e8a84c';bgCol='#fef8ed'}
+  else if(rp>=50){type='rainy'; emoji='☔';title=`雨${gl}`;  mainCol='#5a9cc8';bgCol='#eef4fa'}
+  else if(np>=30){type='snowy'; emoji='❄️';title=`雪${gl}`;  mainCol='#7ab4d4';bgCol='#eef6fc'}
+  else            {type='cloudy';emoji='⛅';title=`くもり${gl}`;mainCol='#9a9080';bgCol='#f6f2ee'}
+
+  // ── 背景 ──
+  x.fillStyle=bgCol; x.fillRect(0,0,S,S);
+
+  // 上部アクセントバー（細め）
+  x.fillStyle=mainCol; x.fillRect(0,0,S,10);
+
+  // ── スタンプ円 ──
+  x.fillStyle='#fff';
+  x.beginPath(); x.arc(S/2,220,110,0,Math.PI*2); x.fill();
+  x.strokeStyle=mainCol+'44'; x.lineWidth=3;
+  x.beginPath(); x.arc(S/2,220,110,0,Math.PI*2); x.stroke();
+
+  // 絵文字
+  x.font='90px sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(emoji, S/2, 222);
+
+  // ── テキスト ──
   x.textBaseline='alphabetic';
-  x.fillText(`${nick}の人生イベント${tot}件を調べたら…`,S/2,420);
+  x.font=`500 26px sans-serif`; x.fillStyle='#a09080';
+  x.fillText(`${nick}の人生${tot}イベントを調べたら…`, S/2, 390);
 
-  // Title
-  x.font='900 72px "Zen Maru Gothic",sans-serif';x.fillStyle=col1;
-  x.fillText(title,S/2,510);
+  x.font=`900 80px sans-serif`; x.fillStyle=mainCol;
+  x.fillText(title, S/2, 490);
 
-  // Bars
-  const bx=190,bw=700,bh=40,by=570;
-  // sunny
-  rr(x,bx,by,bw,bh,8);x.fillStyle='#f0ece4';x.fill();
-  if(sp>0){rr(x,bx,by,Math.max(bw*sp/100,bh),bh,8);x.fillStyle=col1;x.fill();}
-  x.font='700 18px "Zen Maru Gothic",sans-serif';x.fillStyle=sp>30?'#fff':'#8a7a60';
-  x.textAlign='left';x.fillText(`☀️ 晴れ ${sp.toFixed(0)}%`,bx+14,by+27);
+  // ── 天気バー（全4種） ──
+  const bars=[
+    {label:'☀️ 晴れ', pct:sp, col:'#e8a84c'},
+    {label:'☁️ くもり',pct:cp, col:'#b0a898'},
+    {label:'🌧 雨',   pct:rp, col:'#5a9cc8'},
+    {label:'❄️ 雪',   pct:np, col:'#7ab4d4'},
+  ];
+  const bx=140, bw=800, bh=44, gap=60;
+  let byStart=555;
+  x.font=`700 20px sans-serif`; x.textAlign='left';
+  bars.forEach(b=>{
+    // 背景トラック
+    rr(x,bx,byStart,bw,bh,10); x.fillStyle='#e8e2da'; x.fill();
+    // 塗りバー（最低幅は0%なら描かない）
+    if(b.pct>0){
+      const fw=Math.max(bw*b.pct/100, bh); // 最小幅=高さ（角丸のため）
+      rr(x,bx,byStart,fw,bh,10); x.fillStyle=b.col; x.fill();
+    }
+    // ラベル
+    const labelCol = b.pct>35 ? '#fff' : '#7a6a55';
+    x.fillStyle=labelCol;
+    x.fillText(`${b.label}  ${b.pct.toFixed(0)}%`, bx+16, byStart+bh*0.67);
+    byStart+=gap;
+  });
 
-  const by2=by+54;
-  rr(x,bx,by2,bw,bh,8);x.fillStyle='#f0ece4';x.fill();
-  const rainCol=type==='rainy'?col1:'#5a9cc8';
-  if(rp>0){rr(x,bx,by2,Math.max(bw*rp/100,bh),bh,8);x.fillStyle=rainCol;x.fill();}
-  x.fillStyle=rp>30?'#fff':'#8a7a60';
-  x.fillText(`🌧 雨 ${rp.toFixed(0)}%`,bx+14,by2+27);
-
-  // Events preview
-  const previewN=Math.min(res.length,5);
-  const ey=by2+90;
+  // ── イベントミニカード ──
+  const preN=Math.min(res.length,5);
+  const cardW=140, cardH=80, cardGap=(S-preN*cardW)/(preN+1);
+  const cardY=byStart+20;
   x.textAlign='center';
-  for(let i=0;i<previewN;i++){
+  for(let i=0;i<preN;i++){
     const r=res[i];
-    const px=S/2-((previewN-1)*160)/2+i*160;
-    // mini card
-    rr(x,px-60,ey,120,70,10);x.fillStyle='#fff';x.fill();
-    rr(x,px-60,ey,120,70,10);x.strokeStyle='#e8e0d4';x.lineWidth=1;x.stroke();
-    x.font='28px sans-serif';x.fillStyle='#3d3529';
-    x.fillText(r.w.e,px,ey+30);
-    x.font='700 13px "Zen Maru Gothic",sans-serif';x.fillStyle='#7a6a55';
-    x.fillText(r.name.length>5?r.name.slice(0,5)+'…':r.name,px,ey+55);
+    const cx=cardGap+(cardW+cardGap)*i;
+    rr(x,cx,cardY,cardW,cardH,12); x.fillStyle='#fff'; x.fill();
+    rr(x,cx,cardY,cardW,cardH,12); x.strokeStyle='#e8e0d4'; x.lineWidth=1.5; x.stroke();
+    x.font='30px sans-serif'; x.fillStyle='#3d3529';
+    x.fillText(r.w.e, cx+cardW/2, cardY+38);
+    x.font=`600 13px sans-serif`; x.fillStyle='#7a6a55';
+    const nm=r.name.length>5?r.name.slice(0,5)+'…':r.name;
+    x.fillText(nm, cx+cardW/2, cardY+62);
   }
 
-  // Footer
-  x.font='400 16px "Zen Maru Gothic",sans-serif';x.fillStyle='#c5b8a8';
-  x.textAlign='center';
-  x.fillText('#晴れか雨か診断',S/2,S-40);
+  // ── フッター ──
+  x.font=`400 18px sans-serif`; x.fillStyle='#c5b8a8'; x.textAlign='center';
+  x.fillText('#晴れか雨か診断', S/2, S-36);
 
-  // Border
-  x.strokeStyle='#e8e0d4';x.lineWidth=2;
-  rr(x,8,8,S-16,S-16,20);x.stroke();
+  // ── 外枠 ──
+  x.strokeStyle='#e0d8d0'; x.lineWidth=2;
+  rr(x,6,6,S-12,S-12,20); x.stroke();
 
   const url=c.toDataURL('image/png');
   document.getElementById('previewImg').src=url;
   document.getElementById('previewImg').style.display='block';
-  const a=document.createElement('a');a.href=url;a.download='晴れか雨か診断.png';a.click();
+  const a=document.createElement('a'); a.href=url; a.download='晴れか雨か診断.png'; a.click();
 }
 
 function rr(c,x,y,w,h,r){
