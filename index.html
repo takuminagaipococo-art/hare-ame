@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>晴れか雨か - 人生の天気診断</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="晴れか雨か - 人生の天気診断">
+<meta property="og:description" content="あなたの大事な日、晴れてた？人生イベントの天気を調べて体質診断！">
+<meta property="og:image" content="ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="晴れか雨か - 人生の天気診断">
+<meta name="twitter:description" content="あなたの大事な日、晴れてた？雨だった？過去の天気データで診断">
+<meta name="twitter:image" content="ogp.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Klee+One:wght@400;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Zen Maru Gothic',sans-serif;
+  background:#faf6f0;
+  color:#3d3529;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* paper texture */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;
+}
+
+.wrap{
+  position:relative;z-index:1;
+  max-width:480px;margin:0 auto;
+  padding:24px 16px 80px;
+}
+
+/* ===== HEADER ===== */
+.hero{text-align:center;padding:32px 0 20px;position:relative}
+
+.hero-deco{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:200px;height:60px;opacity:0.15;
+  background:repeating-linear-gradient(90deg,transparent,transparent 8px,#e8a84c 8px,#e8a84c 9px);
+  border-radius:30px;
+}
+
+.hero h1{
+  font-family:'Klee One',serif;
+  font-size:26px;font-weight:600;
+  color:#5a4a3a;line-height:1.5;
+  letter-spacing:0.02em;
+}
+.hero h1 .accent{color:#d4722a}
+.hero h1 .accent2{color:#4a7fb5}
+
+.hero-sub{
+  margin-top:6px;
+  font-size:13px;color:#9e9080;
+  font-family:'Klee One',serif;
+}
+
+/* ===== SECTION ===== */
+.sec{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:14px;
+  box-shadow:0 1px 8px rgba(90,60,20,0.06);
+  border:1px solid rgba(180,160,130,0.15);
+}
+
+.sec-title{
+  font-size:14px;font-weight:700;
+  color:#7a6a55;
+  margin-bottom:14px;
+  padding-left:2px;
+  display:flex;align-items:center;gap:6px;
+}
+
+.sec-title .dot{
+  width:8px;height:8px;border-radius:50%;
+  display:inline-block;
+}
+
+/* ===== FORM ===== */
+.nickname-row{display:flex;gap:8px;align-items:end}
+.nickname-row>:first-child{flex:1}
+
+.field label{
+  display:block;font-size:11px;
+  color:#a09080;margin-bottom:3px;
+  font-weight:500;
+}
+
+.field input,.field select{
+  width:100%;padding:10px 12px;
+  border-radius:12px;
+  border:1.5px solid #e5ddd2;
+  background:#fdfbf8;color:#3d3529;
+  font-size:14px;font-family:inherit;
+  outline:none;transition:border-color 0.2s;
+}
+.field input:focus{border-color:#d4a574}
+.field input::placeholder{color:#c5b8a8}
+
+.gender-pills{display:flex;gap:6px;margin-top:2px}
+.g-pill{
+  flex:1;padding:9px 0;
+  border-radius:10px;
+  border:1.5px solid #e5ddd2;
+  background:#fdfbf8;
+  color:#a09080;font-size:13px;font-weight:500;
+  cursor:pointer;text-align:center;
+  transition:all 0.2s;font-family:inherit;
+}
+.g-pill.on{
+  border-color:#d4a574;
+  background:#fef5ec;color:#b87830;
+}
+
+/* Templates */
+.tmpl-wrap{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin-bottom:14px;
+}
+.tmpl{
+  padding:6px 12px;
+  border-radius:18px;
+  border:1.5px solid #ece4d8;
+  background:#fdfbf7;
+  color:#7a6a55;font-size:12px;
+  cursor:pointer;transition:all 0.15s;
+  font-family:inherit;font-weight:500;
+  white-space:nowrap;
+}
+.tmpl:hover{background:#f5ece0;border-color:#d4c4aa}
+.tmpl:active{transform:scale(0.96)}
+
+.form-row{display:flex;gap:8px;margin-top:8px}
+.form-row>.field{flex:1}
+
+.loc-wrap{position:relative}
+
+.suggestions{
+  position:absolute;z-index:10;
+  background:#fff;
+  border:1.5px solid #e5ddd2;
+  border-radius:12px;
+  max-height:150px;overflow-y:auto;
+  width:100%;display:none;
+  box-shadow:0 6px 20px rgba(90,60,20,0.1);
+  margin-top:2px;
+}
+.suggestions.on{display:block}
+.sug-item{
+  padding:9px 12px;cursor:pointer;
+  font-size:13px;color:#5a4a3a;
+  transition:background 0.1s;
+}
+.sug-item:hover{background:#faf3ea}
+.sug-item:first-child{border-radius:10px 10px 0 0}
+.sug-item:last-child{border-radius:0 0 10px 10px}
+
+.add-btn{
+  width:100%;padding:11px;margin-top:10px;
+  border-radius:12px;
+  border:1.5px dashed #d4c4aa;
+  background:transparent;
+  color:#a09080;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;
+  font-family:inherit;
+}
+.add-btn:hover{background:#faf3ea;border-color:#c4a87a;color:#8a7a60}
+
+.err{color:#c45a4a;font-size:11px;margin-top:4px}
+
+/* Event list */
+.ev-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ev-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;
+  background:#faf6f0;border-radius:10px;
+  animation:fadeUp 0.25s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.ev-item .ev-name{font-size:13px;font-weight:700;color:#5a4a3a}
+.ev-item .ev-meta{font-size:11px;color:#a09080;margin-top:1px}
+.ev-del{
+  background:none;border:none;color:#c5b8a8;
+  cursor:pointer;font-size:16px;padding:2px 6px;
+  border-radius:6px;transition:all 0.15s;
+}
+.ev-del:hover{color:#c45a4a;background:rgba(196,90,74,0.08)}
+
+/* Diagnose button */
+.go-btn{
+  width:100%;padding:15px;margin-top:4px;
+  border-radius:14px;border:none;
+  background:#e8a84c;color:#fff;
+  font-size:16px;font-weight:900;
+  cursor:pointer;transition:all 0.2s;
+  font-family:inherit;
+  box-shadow:0 2px 12px rgba(232,168,76,0.25);
+  position:relative;overflow:hidden;
+}
+.go-btn:hover{background:#db9a3e;transform:translateY(-1px);box-shadow:0 4px 18px rgba(232,168,76,0.3)}
+.go-btn:disabled{background:#d8ccba;box-shadow:none;cursor:not-allowed;transform:none;color:#f5f0e8}
+
+/* ===== LOADING ===== */
+.loading{
+  display:none;position:fixed;inset:0;
+  background:rgba(250,246,240,0.92);
+  backdrop-filter:blur(6px);
+  z-index:100;
+  justify-content:center;align-items:center;
+  flex-direction:column;gap:16px;
+}
+.loading.on{display:flex}
+
+.ld-icon{font-size:48px;position:relative}
+.ld-icon .umbrella{
+  display:inline-block;
+  animation:wobble 0.8s ease-in-out infinite alternate;
+}
+@keyframes wobble{0%{transform:rotate(-10deg)}100%{transform:rotate(10deg)}}
+
+.ld-text{font-size:14px;color:#9e9080;font-family:'Klee One',serif;text-align:center}
+.ld-bar{width:180px;height:3px;background:#e8e0d4;border-radius:2px;overflow:hidden}
+.ld-fill{height:100%;background:#e8a84c;border-radius:2px;transition:width 0.3s;width:0%}
+
+/* ===== RESULTS ===== */
+.result{display:none}
+.result.on{display:block}
+
+.res-card{
+  background:#fff;border-radius:24px;
+  padding:28px 20px 20px;text-align:center;
+  margin-bottom:14px;
+  box-shadow:0 2px 16px rgba(90,60,20,0.07);
+  border:1px solid rgba(180,160,130,0.12);
+  position:relative;overflow:hidden;
+}
+
+.res-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+}
+.res-card.sunny::before{background:linear-gradient(90deg,#f0c040,#e89030)}
+.res-card.rainy::before{background:linear-gradient(90deg,#7ab8e0,#5090c0)}
+.res-card.cloudy::before{background:linear-gradient(90deg,#c0b8a8,#a09888)}
+.res-card.snowy::before{background:linear-gradient(90deg,#b8d8f0,#90b8d8)}
+
+.res-stamp{
+  width:100px;height:100px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;
+  animation:stampIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  position:relative;
+}
+
+.res-stamp.sunny{background:linear-gradient(135deg,#fef5e0,#fde8c0)}
+.res-stamp.rainy{background:linear-gradient(135deg,#e8f0f8,#d0e4f4)}
+.res-stamp.cloudy{background:linear-gradient(135deg,#f0ece8,#e0d8d0)}
+.res-stamp.snowy{background:linear-gradient(135deg,#eef4fa,#d8e8f4)}
+
+@keyframes stampIn{0%{transform:scale(0) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+.res-label{
+  font-size:11px;color:#a09080;
+  font-family:'Klee One',serif;
+  margin-bottom:4px;
+}
+.res-type{
+  font-size:30px;font-weight:900;
+  margin-bottom:4px;
+}
+.res-type.sunny{color:#c87820}
+.res-type.rainy{color:#4a7fb5}
+.res-type.cloudy{color:#8a7a68}
+.res-type.snowy{color:#6090b0}
+
+.res-desc{font-size:13px;color:#9e9080;font-family:'Klee One',serif;line-height:1.6}
+
+/* Gauge */
+.gauge-row{
+  display:flex;gap:12px;
+  margin:20px 0 4px;
+  justify-content:center;
+}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:90px}
+.gauge-ring{width:60px;height:60px;position:relative}
+.gauge-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-ring .bg{fill:none;stroke:#f0ece4;stroke-width:5}
+.gauge-ring .fg{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:163.4;stroke-dashoffset:163.4;transition:stroke-dashoffset 0.8s ease 0.2s}
+.gauge-pct{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;
+}
+.gauge-name{font-size:11px;color:#a09080;font-weight:500}
+
+/* Event results */
+.ev-res{display:flex;flex-direction:column;gap:6px}
+.ev-r{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;background:#faf6f0;border-radius:10px;
+}
+.ev-r .ev-name{font-size:13px;font-weight:700;color:#5a4a3a}
+.ev-r .ev-meta{font-size:11px;color:#a09080;margin-top:1px}
+
+.w-tag{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:4px 10px;border-radius:8px;
+  font-size:12px;font-weight:700;
+  white-space:nowrap;
+}
+.w-tag.sunny{background:#fef5e0;color:#c07020}
+.w-tag.rainy{background:#e8f0f8;color:#4a7fb5}
+.w-tag.cloudy{background:#f0ece8;color:#8a7a68}
+.w-tag.snowy{background:#eef4fa;color:#6090b0}
+
+/* Share */
+.share-row{display:flex;flex-direction:column;gap:8px}
+
+.s-btn{
+  width:100%;padding:13px;
+  border-radius:12px;border:none;
+  font-size:14px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;
+  font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.s-btn:hover{transform:translateY(-1px)}
+
+.s-btn.xpost{background:#1d1d1d;color:#fff}
+.s-btn.xpost:hover{box-shadow:0 3px 12px rgba(0,0,0,0.15)}
+.s-btn.imgdl{background:#5a8f5a;color:#fff}
+.s-btn.imgdl:hover{box-shadow:0 3px 12px rgba(90,143,90,0.25)}
+.s-btn.redo{background:#f0ece4;color:#7a6a55}
+
+.preview-img{
+  border-radius:12px;max-width:100%;margin:12px auto;
+  display:block;box-shadow:0 2px 12px rgba(90,60,20,0.1);
+  border:1px solid #e8e0d4;
+}
+
+canvas{display:none}
+
+.footer-note{
+  text-align:center;margin-top:24px;
+  font-size:11px;color:#c5b8a8;
+  font-family:'Klee One',serif;
+}
+
+@media(max-width:480px){
+  .form-row{flex-direction:column;gap:8px}
+  .hero h1{font-size:22px}
+  .res-type{font-size:26px}
+  .gauge-row{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-deco"></div>
+    <h1>あなたの人生、<br><span class="accent">晴れ</span>てた？<span class="accent2">雨</span>だった？</h1>
+    <p class="hero-sub">大事な日の天気を調べて、体質を診断</p>
+  </div>
+
+  <div id="inputSection">
+    <div class="sec">
+      <div class="sec-title"><span class="dot" style="background:#e8a84c"></span>あなたのこと</div>
+      <div class="nickname-row">
+        <div class="field">
+          <label>なまえ</label>
+          <input type="text" id="nickname" placeholder="ニックネーム" maxlength="20">
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>表示タイプ</label>
+        <div class="gender-pills">
+          <button class="g-pill on" data-g="male" onclick="setG('male')">晴れ男 / 雨男</button>
+          <button class="g-pill" data-g="female" onclick="setG('female')">晴れ女 / 雨女</button>
+          <button class="g-pill" data-g="neutral" onclick="setG('neutral')">指定なし</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title"><span class="dot" style="background:#7ab8e0"></span>イベントを登録</div>
+      <div class="tmpl-wrap" id="tmplWrap"></div>
+      <div class="field">
+        <label>どんなイベント？</label>
+        <input type="text" id="evName" placeholder="例: 高校の入学式" maxlength="30">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>いつ？</label>
+          <input type="date" id="evDate" max="2026-03-11">
+        </div>
+        <div class="field loc-wrap">
+          <label>どこで？</label>
+          <input type="text" id="evLoc" placeholder="東京、大阪、京都…" autocomplete="off">
+          <div class="suggestions" id="sug"></div>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addEv()">+ 追加する</button>
+      <div class="err" id="err"></div>
+      <div class="ev-list" id="evList"></div>
+    </div>
+
+    <button class="go-btn" id="goBtn" onclick="run()" disabled>あと3つ登録してね</button>
+  </div>
+
+  <div class="loading" id="ld">
+    <div class="ld-icon"><span class="umbrella">&#9748;</span></div>
+    <div class="ld-text" id="ldTxt">天気データをさがしています...</div>
+    <div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="res-card" id="resCard">
+      <div class="res-stamp" id="resStamp"></div>
+      <div class="res-label" id="resLabel"></div>
+      <div class="res-type" id="resType"></div>
+      <div class="res-desc" id="resDesc"></div>
+      <div class="gauge-row" id="gauges"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title"><span class="dot" style="background:#90b070"></span>イベントごとの天気</div>
+      <div class="ev-res" id="evRes"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title"><span class="dot" style="background:#c07080"></span>みんなに見せる</div>
+      <img class="preview-img" id="previewImg" style="display:none">
+      <div class="share-row">
+        <button class="s-btn imgdl" onclick="makeImg()">画像を保存する</button>
+        <button class="s-btn xpost" onclick="postX()">&#120143; でポストする</button>
+        <button class="s-btn redo" onclick="redo()">もう一回やる</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">実際の気象データ（Open-Meteo）を使用しています</div>
+</div>
+
+<canvas id="cvs" width="1080" height="1080"></canvas>
+
+<script>
+// ★ ここにGitHub PagesのURLを入れてね ★
+const SITE_URL = location.href;
+
+let evs=[], gender='male', res=null, sLat=null, sLon=null, sto=null;
+
+const TPL=[
+  {n:'入学式',i:'🎒'},{n:'卒業式',i:'🎓'},{n:'入社式',i:'💼'},
+  {n:'結婚式',i:'💒'},{n:'初デート',i:'💘'},{n:'修学旅行',i:'🚌'},
+  {n:'成人式',i:'👘'},{n:'海外旅行',i:'✈️'},{n:'推しのライブ',i:'🎤'},
+  {n:'大事な試験',i:'📝'},{n:'引っ越し',i:'📦'},{n:'運動会',i:'🏃'},
+  {n:'花火大会',i:'🎆'},{n:'プロポーズ',i:'💍'},
+];
+
+// 主要都市プリセット（APIが使えない場合のフォールバック）
+const CITIES=[
+  {name:'札幌',lat:43.06,lon:141.35},{name:'旭川',lat:43.77,lon:142.37},
+  {name:'函館',lat:41.77,lon:140.73},{name:'青森',lat:40.82,lon:140.74},
+  {name:'盛岡',lat:39.70,lon:141.15},{name:'仙台',lat:38.27,lon:140.87},
+  {name:'秋田',lat:39.72,lon:140.10},{name:'山形',lat:38.25,lon:140.34},
+  {name:'福島',lat:37.75,lon:140.47},{name:'水戸',lat:36.34,lon:140.45},
+  {name:'宇都宮',lat:36.57,lon:139.88},{name:'前橋',lat:36.39,lon:139.06},
+  {name:'さいたま',lat:35.86,lon:139.65},{name:'千葉',lat:35.61,lon:140.12},
+  {name:'東京',lat:35.68,lon:139.69},{name:'横浜',lat:35.44,lon:139.64},
+  {name:'新潟',lat:37.90,lon:139.02},{name:'富山',lat:36.70,lon:137.21},
+  {name:'金沢',lat:36.59,lon:136.63},{name:'福井',lat:36.07,lon:136.22},
+  {name:'甲府',lat:35.66,lon:138.57},{name:'長野',lat:36.65,lon:138.18},
+  {name:'岐阜',lat:35.39,lon:136.72},{name:'静岡',lat:34.98,lon:138.38},
+  {name:'名古屋',lat:35.18,lon:136.91},{name:'津',lat:34.73,lon:136.51},
+  {name:'大津',lat:35.00,lon:135.87},{name:'京都',lat:35.01,lon:135.77},
+  {name:'大阪',lat:34.69,lon:135.50},{name:'神戸',lat:34.69,lon:135.20},
+  {name:'奈良',lat:34.69,lon:135.80},{name:'和歌山',lat:34.23,lon:135.17},
+  {name:'鳥取',lat:35.50,lon:134.24},{name:'松江',lat:35.47,lon:133.05},
+  {name:'岡山',lat:34.66,lon:133.93},{name:'広島',lat:34.40,lon:132.46},
+  {name:'山口',lat:34.19,lon:131.47},{name:'徳島',lat:34.07,lon:134.56},
+  {name:'高松',lat:34.34,lon:134.04},{name:'松山',lat:33.84,lon:132.77},
+  {name:'高知',lat:33.56,lon:133.53},{name:'福岡',lat:33.59,lon:130.40},
+  {name:'佐賀',lat:33.25,lon:130.30},{name:'長崎',lat:32.75,lon:129.87},
+  {name:'熊本',lat:32.79,lon:130.74},{name:'大分',lat:33.24,lon:131.61},
+  {name:'宮崎',lat:31.91,lon:131.42},{name:'鹿児島',lat:31.56,lon:130.56},
+  {name:'那覇',lat:26.21,lon:127.68},{name:'北九州',lat:33.88,lon:130.88},
+  {name:'川崎',lat:35.53,lon:139.70},{name:'相模原',lat:35.57,lon:139.37},
+  {name:'浜松',lat:34.71,lon:137.73},{name:'堺',lat:34.57,lon:135.48},
+  // 海外主要都市
+  {name:'ソウル',lat:37.57,lon:126.98},{name:'釜山',lat:35.18,lon:129.08},
+  {name:'台北',lat:25.03,lon:121.57},{name:'香港',lat:22.32,lon:114.17},
+  {name:'上海',lat:31.23,lon:121.47},{name:'北京',lat:39.90,lon:116.41},
+  {name:'バンコク',lat:13.76,lon:100.50},{name:'シンガポール',lat:1.35,lon:103.82},
+  {name:'ハノイ',lat:21.03,lon:105.85},{name:'ホーチミン',lat:10.82,lon:106.63},
+  {name:'マニラ',lat:14.60,lon:120.98},{name:'ジャカルタ',lat:-6.21,lon:106.85},
+  {name:'クアラルンプール',lat:3.14,lon:101.69},{name:'デリー',lat:28.61,lon:77.21},
+  {name:'ムンバイ',lat:19.08,lon:72.88},{name:'ドバイ',lat:25.20,lon:55.27},
+  {name:'イスタンブール',lat:41.01,lon:28.98},{name:'カイロ',lat:30.04,lon:31.24},
+  {name:'ロンドン',lat:51.51,lon:-0.13},{name:'パリ',lat:48.86,lon:2.35},
+  {name:'ベルリン',lat:52.52,lon:13.41},{name:'ローマ',lat:41.90,lon:12.50},
+  {name:'マドリード',lat:40.42,lon:-3.70},{name:'バルセロナ',lat:41.39,lon:2.17},
+  {name:'アムステルダム',lat:52.37,lon:4.90},{name:'ウィーン',lat:48.21,lon:16.37},
+  {name:'ニューヨーク',lat:40.71,lon:-74.01},{name:'ロサンゼルス',lat:34.05,lon:-118.24},
+  {name:'サンフランシスコ',lat:37.77,lon:-122.42},{name:'シカゴ',lat:41.88,lon:-87.63},
+  {name:'ホノルル',lat:21.31,lon:-157.86},{name:'バンクーバー',lat:49.28,lon:-123.12},
+  {name:'トロント',lat:43.65,lon:-79.38},{name:'シドニー',lat:-33.87,lon:151.21},
+  {name:'メルボルン',lat:-37.81,lon:144.96},{name:'オークランド',lat:-36.85,lon:174.76},
+];
+
+const WM={
+  0:{l:'快晴',e:'☀️',t:'sunny'},1:{l:'晴れ',e:'🌤',t:'sunny'},
+  2:{l:'うす曇り',e:'⛅',t:'sunny'},3:{l:'くもり',e:'☁️',t:'cloudy'},
+  45:{l:'霧',e:'🌫',t:'cloudy'},48:{l:'霧',e:'🌫',t:'cloudy'},
+  51:{l:'小雨',e:'🌦',t:'rainy'},53:{l:'雨',e:'🌧',t:'rainy'},
+  55:{l:'強い雨',e:'🌧',t:'rainy'},56:{l:'霧雨',e:'🌧',t:'rainy'},
+  57:{l:'霧雨',e:'🌧',t:'rainy'},61:{l:'小雨',e:'🌧',t:'rainy'},
+  63:{l:'雨',e:'🌧',t:'rainy'},65:{l:'大雨',e:'🌧',t:'rainy'},
+  66:{l:'氷雨',e:'🌧',t:'rainy'},67:{l:'氷雨',e:'🌧',t:'rainy'},
+  71:{l:'小雪',e:'🌨',t:'snowy'},73:{l:'雪',e:'❄️',t:'snowy'},
+  75:{l:'大雪',e:'❄️',t:'snowy'},77:{l:'雪',e:'❄️',t:'snowy'},
+  80:{l:'にわか雨',e:'🌦',t:'rainy'},81:{l:'雨',e:'🌧',t:'rainy'},
+  82:{l:'豪雨',e:'⛈',t:'rainy'},85:{l:'にわか雪',e:'🌨',t:'snowy'},
+  86:{l:'大雪',e:'❄️',t:'snowy'},95:{l:'雷雨',e:'⛈',t:'rainy'},
+  96:{l:'雷雨',e:'⛈',t:'rainy'},99:{l:'雷雨',e:'⛈',t:'rainy'},
+};
+
+// Descriptions for each result type - casual, human-sounding
+const DESC={
+  sunny:[
+    'あなたが外に出ると、空もつられて晴れちゃうみたい。',
+    '大事な日はだいたい晴れ。持ってるなぁ。',
+    'お天道様に好かれてる、ラッキー体質。',
+  ],
+  rainy:[
+    '雨にも負けず…でもちょっと多くない？って思うよね。',
+    '傘が手放せない人生。でもそれ、なんかドラマチック。',
+    '雨の日の思い出って、なぜかよく覚えてるんだよね。',
+  ],
+  cloudy:[
+    '晴れでも雨でもない。安定感のある天気体質。',
+    'どっちにも転ぶバランス型。ある意味最強かも。',
+  ],
+  snowy:[
+    'えっ、雪率たかっ。ロマンチック体質かもしれない。',
+    '雪の日の記憶って特別だよね。レア体質おめでとう。',
+  ],
+};
+
+// Init templates
+(function(){
+  const w=document.getElementById('tmplWrap');
+  TPL.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tmpl';
+    b.textContent=t.i+' '+t.n;
+    b.onclick=()=>{document.getElementById('evName').value=t.n};
+    w.appendChild(b);
+  });
+})();
+
+function setG(g){
+  gender=g;
+  document.querySelectorAll('.g-pill').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+}
+
+// City search: プリセット優先、APIで補完
+const locIn=document.getElementById('evLoc'), sugEl=document.getElementById('sug');
+locIn.addEventListener('input',()=>{
+  clearTimeout(sto);sLat=sLon=null;
+  const q=locIn.value.trim();
+  if(q.length<1){sugEl.classList.remove('on');return}
+  // まずプリセットから検索
+  const local=CITIES.filter(c=>c.name.includes(q)).slice(0,6);
+  if(local.length>0){
+    showSuggestions(local.map(c=>({name:c.name,lat:c.lat,lon:c.lon})));
+  }
+  // APIでも並行して検索（結果が来たらマージ）
+  sto=setTimeout(()=>findCity(q,local),400);
+});
+locIn.addEventListener('blur',()=>setTimeout(()=>sugEl.classList.remove('on'),200));
+
+function showSuggestions(items){
+  sugEl.innerHTML='';
+  items.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='sug-item';
+    div.textContent=c.name;
+    div.onclick=()=>{locIn.value=c.name;sLat=c.lat;sLon=c.lon;sugEl.classList.remove('on')};
+    sugEl.appendChild(div);
+  });
+  if(items.length>0)sugEl.classList.add('on');
+  else sugEl.classList.remove('on');
+}
+
+async function findCity(q,localResults){
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=ja&format=json`);
+    const d=await r.json();
+    if(d.results?.length){
+      // プリセットにない都市をAPIから追加
+      const localNames=new Set((localResults||[]).map(c=>c.name));
+      const apiItems=d.results
+        .filter(c=>!localNames.has(c.name))
+        .map(c=>{
+          const p=[c.name];if(c.admin1)p.push(c.admin1);if(c.country)p.push(c.country);
+          return{name:p.join('、'),lat:c.latitude,lon:c.longitude};
+        });
+      const merged=[...(localResults||[]).map(c=>({name:c.name,lat:c.lat,lon:c.lon})),...apiItems].slice(0,6);
+      // 入力値がまだ同じなら表示を更新
+      if(locIn.value.trim().includes(q.charAt(0)))showSuggestions(merged);
+    }
+  }catch(e){
+    // API失敗してもプリセット候補は既に表示済みなのでOK
+  }
+}
+
+// Add event
+function addEv(){
+  const name=document.getElementById('evName').value.trim();
+  const date=document.getElementById('evDate').value;
+  const loc=locIn.value.trim();
+  const err=document.getElementById('err');
+  err.textContent='';
+
+  if(!name){err.textContent='イベント名をいれてね';return}
+  if(!date){err.textContent='日付をいれてね';return}
+  if(!loc){err.textContent='場所をいれてね';return}
+  // プリセットから完全一致で自動補完
+  if(!sLat||!sLon){
+    const match=CITIES.find(c=>c.name===loc);
+    if(match){sLat=match.lat;sLon=match.lon}
+    else{err.textContent='候補から場所をえらんでね（例: 東京、大阪）';return}
+  }
+  if(new Date(date)>new Date()){err.textContent='過去の日付にしてね';return}
+
+  evs.push({name,date,loc,lat:sLat,lon:sLon});
+  document.getElementById('evName').value='';
+  document.getElementById('evDate').value='';
+  locIn.value='';sLat=sLon=null;
+  render();
+}
+
+function delEv(i){evs.splice(i,1);render()}
+
+function render(){
+  const list=document.getElementById('evList');
+  list.innerHTML='';
+  evs.forEach((ev,i)=>{
+    const d=new Date(ev.date);
+    const ds=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+    list.innerHTML+=`<div class="ev-item"><div><div class="ev-name">${esc(ev.name)}</div><div class="ev-meta">${ds}・${esc(ev.loc)}</div></div><button class="ev-del" onclick="delEv(${i})">×</button></div>`;
+  });
+  const btn=document.getElementById('goBtn');
+  const need=3-evs.length;
+  if(need>0){btn.disabled=true;btn.textContent=`あと${need}つ登録してね`}
+  else{btn.disabled=false;btn.textContent=`${evs.length}件で診断する`}
+}
+
+// Run diagnosis
+async function run(){
+  const ld=document.getElementById('ld');
+  const fill=document.getElementById('ldFill');
+  const txt=document.getElementById('ldTxt');
+  ld.classList.add('on');
+
+  const out=[];
+  for(let i=0;i<evs.length;i++){
+    const ev=evs[i];
+    fill.style.width=((i+1)/evs.length*100)+'%';
+    txt.textContent=`「${ev.name}」の天気を調べてる… (${i+1}/${evs.length})`;
+    try{
+      const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${ev.lat}&longitude=${ev.lon}&start_date=${ev.date}&end_date=${ev.date}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FTokyo`;
+      const r=await fetch(url);const d=await r.json();
+      if(d.daily?.weather_code?.[0]!=null){
+        const c=d.daily.weather_code[0];
+        const w=WM[c]||{l:'不明',e:'？',t:'cloudy'};
+        out.push({...ev,wc:c,w,tMax:d.daily.temperature_2m_max?.[0],tMin:d.daily.temperature_2m_min?.[0],prec:d.daily.precipitation_sum?.[0]});
+      }else out.push({...ev,wc:-1,w:{l:'データなし',e:'？',t:'cloudy'},tMax:null,tMin:null,prec:null});
+    }catch(e){out.push({...ev,wc:-1,w:{l:'エラー',e:'？',t:'cloudy'},tMax:null,tMin:null,prec:null})}
+    if(i<evs.length-1)await slp(300);
+  }
+  res=out;ld.classList.remove('on');showRes();
+}
+
+function showRes(){
+  document.getElementById('inputSection').style.display='none';
+  document.getElementById('result').classList.add('on');
+
+  const cnt={sunny:0,cloudy:0,rainy:0,snowy:0};
+  res.forEach(r=>cnt[r.w.t]++);
+  const tot=res.length;
+  const sp=cnt.sunny/tot*100,rp=cnt.rainy/tot*100,cp=cnt.cloudy/tot*100,np=cnt.snowy/tot*100;
+
+  const gl=gender==='male'?'男':gender==='female'?'女':'体質';
+  let type,emoji,title,cls;
+  if(sp>=50){type='sunny';emoji='☀️';title=`晴れ${gl}`;cls='sunny'}
+  else if(rp>=50){type='rainy';emoji='☔';title=`雨${gl}`;cls='rainy'}
+  else if(np>=30){type='snowy';emoji='❄️';title=`雪${gl}`;cls='snowy'}
+  else{type='cloudy';emoji='⛅';title=`くもり${gl}`;cls='cloudy'}
+
+  const nick=document.getElementById('nickname').value.trim()||'あなた';
+  const card=document.getElementById('resCard');
+  card.className='res-card '+cls;
+  document.getElementById('resStamp').className='res-stamp '+cls;
+  document.getElementById('resStamp').textContent=emoji;
+  document.getElementById('resLabel').textContent=`${nick}の診断結果`;
+  const tt=document.getElementById('resType');
+  tt.className='res-type '+cls;tt.textContent=title;
+  const descs=DESC[type];
+  document.getElementById('resDesc').textContent=descs[Math.floor(Math.random()*descs.length)];
+
+  // Gauges
+  const gEl=document.getElementById('gauges');gEl.innerHTML='';
+  const gData=[
+    {n:'晴れ',p:sp,c:'#e8a84c'},{n:'くもり',p:cp,c:'#a09888'},
+    {n:'雨',p:rp,c:'#5a9cc8'},{n:'雪',p:np,c:'#8ab8d8'},
+  ];
+  gData.forEach(g=>{
+    if(g.p<=0&&g.n!=='晴れ'&&g.n!=='雨')return;
+    const off=163.4-(163.4*g.p/100);
+    gEl.innerHTML+=`<div class="gauge"><div class="gauge-ring"><svg viewBox="0 0 60 60"><circle class="bg" cx="30" cy="30" r="26"/><circle class="fg" cx="30" cy="30" r="26" stroke="${g.c}" style="stroke-dashoffset:${off}"/></svg><div class="gauge-pct" style="color:${g.c}">${g.p.toFixed(0)}%</div></div><div class="gauge-name">${g.n}</div></div>`;
+  });
+
+  // Event results
+  const er=document.getElementById('evRes');er.innerHTML='';
+  res.forEach(r=>{
+    const d=new Date(r.date);
+    const ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+    const tmp=r.tMax!=null?` ${r.tMax}°C`:'';
+    er.innerHTML+=`<div class="ev-r"><div><div class="ev-name">${esc(r.name)}</div><div class="ev-meta">${ds}・${esc(r.loc)}${tmp}</div></div><span class="w-tag ${r.w.t}">${r.w.e} ${r.w.l}</span></div>`;
+  });
+
+  document.getElementById('previewImg').style.display='none';
+}
+
+// Share X
+function postX(){
+  if(!res)return;
+  const cnt={sunny:0,cloudy:0,rainy:0,snowy:0};
+  res.forEach(r=>cnt[r.w.t]++);
+  const tot=res.length;
+  const sp=(cnt.sunny/tot*100).toFixed(0),rp=(cnt.rainy/tot*100).toFixed(0);
+  const gl=gender==='male'?'男':gender==='female'?'女':'体質';
+  const nick=document.getElementById('nickname').value.trim()||'わたし';
+  let tp;
+  if(sp>=50)tp=`晴れ${gl}☀️`;
+  else if(rp>=50)tp=`雨${gl}☔`;
+  else tp=`くもり${gl}⛅`;
+
+  const txt=`${nick}の人生イベント${tot}件を調べたら\n「${tp}」だった！\n\n☀️${sp}% ☁️${(cnt.cloudy/tot*100).toFixed(0)}% 🌧${rp}%\n\nあなたも調べてみて\n#晴れか雨か診断`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt)}&url=${encodeURIComponent(SITE_URL)}`,'_blank');
+}
+
+// Generate image (1:1 for SNS)
+function makeImg(){
+  const c=document.getElementById('cvs'),x=c.getContext('2d');
+  const S=1080;
+
+  // BG
+  x.fillStyle='#faf6f0';x.fillRect(0,0,S,S);
+
+  // Top accent bar
+  const cnt={sunny:0,cloudy:0,rainy:0,snowy:0};
+  res.forEach(r=>cnt[r.w.t]++);
+  const tot=res.length;
+  const sp=cnt.sunny/tot*100,rp=cnt.rainy/tot*100,np=cnt.snowy/tot*100;
+  const gl=gender==='male'?'男':gender==='female'?'女':'体質';
+
+  let type,emoji,title,col1,col2;
+  if(sp>=50){type='sunny';emoji='☀️';title=`晴れ${gl}`;col1='#e8a84c';col2='#f0c860'}
+  else if(rp>=50){type='rainy';emoji='☔';title=`雨${gl}`;col1='#5a9cc8';col2='#7ab8e0'}
+  else if(np>=30){type='snowy';emoji='❄️';title=`雪${gl}`;col1='#8ab8d8';col2='#a8d0e8'}
+  else{type='cloudy';emoji='⛅';title=`くもり${gl}`;col1='#a09888';col2='#c0b8a8'}
+
+  // Accent bar top
+  const grd=x.createLinearGradient(0,0,S,0);
+  grd.addColorStop(0,col1);grd.addColorStop(1,col2);
+  x.fillStyle=grd;x.fillRect(0,0,S,8);
+
+  // Decorative circles
+  x.globalAlpha=0.06;
+  x.fillStyle=col1;
+  x.beginPath();x.arc(160,200,180,0,Math.PI*2);x.fill();
+  x.fillStyle=col2;
+  x.beginPath();x.arc(S-160,S-200,180,0,Math.PI*2);x.fill();
+  x.globalAlpha=1;
+
+  // Stamp circle
+  x.fillStyle=type==='sunny'?'#fef5e0':type==='rainy'?'#e8f0f8':type==='snowy'?'#eef4fa':'#f0ece8';
+  x.beginPath();x.arc(S/2,260,100,0,Math.PI*2);x.fill();
+
+  // Emoji
+  x.font='80px sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText(emoji,S/2,260);
+
+  // Nick
+  const nick=document.getElementById('nickname').value.trim()||'あなた';
+  x.font='500 24px "Zen Maru Gothic",sans-serif';x.fillStyle='#a09080';
+  x.textBaseline='alphabetic';
+  x.fillText(`${nick}の人生イベント${tot}件を調べたら…`,S/2,420);
+
+  // Title
+  x.font='900 72px "Zen Maru Gothic",sans-serif';x.fillStyle=col1;
+  x.fillText(title,S/2,510);
+
+  // Bars
+  const bx=190,bw=700,bh=40,by=570;
+  // sunny
+  rr(x,bx,by,bw,bh,8);x.fillStyle='#f0ece4';x.fill();
+  if(sp>0){rr(x,bx,by,Math.max(bw*sp/100,bh),bh,8);x.fillStyle=col1;x.fill();}
+  x.font='700 18px "Zen Maru Gothic",sans-serif';x.fillStyle=sp>30?'#fff':'#8a7a60';
+  x.textAlign='left';x.fillText(`☀️ 晴れ ${sp.toFixed(0)}%`,bx+14,by+27);
+
+  const by2=by+54;
+  rr(x,bx,by2,bw,bh,8);x.fillStyle='#f0ece4';x.fill();
+  const rainCol=type==='rainy'?col1:'#5a9cc8';
+  if(rp>0){rr(x,bx,by2,Math.max(bw*rp/100,bh),bh,8);x.fillStyle=rainCol;x.fill();}
+  x.fillStyle=rp>30?'#fff':'#8a7a60';
+  x.fillText(`🌧 雨 ${rp.toFixed(0)}%`,bx+14,by2+27);
+
+  // Events preview
+  const previewN=Math.min(res.length,5);
+  const ey=by2+90;
+  x.textAlign='center';
+  for(let i=0;i<previewN;i++){
+    const r=res[i];
+    const px=S/2-((previewN-1)*160)/2+i*160;
+    // mini card
+    rr(x,px-60,ey,120,70,10);x.fillStyle='#fff';x.fill();
+    rr(x,px-60,ey,120,70,10);x.strokeStyle='#e8e0d4';x.lineWidth=1;x.stroke();
+    x.font='28px sans-serif';x.fillStyle='#3d3529';
+    x.fillText(r.w.e,px,ey+30);
+    x.font='700 13px "Zen Maru Gothic",sans-serif';x.fillStyle='#7a6a55';
+    x.fillText(r.name.length>5?r.name.slice(0,5)+'…':r.name,px,ey+55);
+  }
+
+  // Footer
+  x.font='400 16px "Zen Maru Gothic",sans-serif';x.fillStyle='#c5b8a8';
+  x.textAlign='center';
+  x.fillText('#晴れか雨か診断',S/2,S-40);
+
+  // Border
+  x.strokeStyle='#e8e0d4';x.lineWidth=2;
+  rr(x,8,8,S-16,S-16,20);x.stroke();
+
+  const url=c.toDataURL('image/png');
+  document.getElementById('previewImg').src=url;
+  document.getElementById('previewImg').style.display='block';
+  const a=document.createElement('a');a.href=url;a.download='晴れか雨か診断.png';a.click();
+}
+
+function rr(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+
+function redo(){
+  document.getElementById('result').classList.remove('on');
+  document.getElementById('inputSection').style.display='block';
+  document.getElementById('previewImg').style.display='none';
+  res=null;
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function slp(ms){return new Promise(r=>setTimeout(r,ms))}
+</script>
+</body>
+</html>
